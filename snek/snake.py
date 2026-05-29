@@ -2,6 +2,8 @@ import pygame
 import random
 import sys
 import time
+import threading
+
 # Initialize Pygame
 pygame.init()
 
@@ -39,12 +41,7 @@ i = 1
 
 
 
-sdown = pygame.image.load("snake.down.png")
-sleft = pygame.image.load("snake.left.png")
-sup = pygame.image.load("snake.up.png")
-sright = pygame.image.load("snake.right.png")
-smiddle = pygame.image.load("snake.middle.png")
-apple = pygame.image.load("apple.png")
+
 
 co = []
 coordinates = []
@@ -82,6 +79,7 @@ def getcord(item):
 def drawgrid():
 
 
+
     for i in range(grid_size*grid_size):
 
 
@@ -93,8 +91,9 @@ def drawgrid():
 
         rectangle = pygame.Rect(x,y,sizex,sizey)
         pygame.draw.rect(screen,(gridcolor), rectangle, width_width)
-
+    
 def drawpic(picture,cords):
+
     str(picture)
     picture = pygame.image.load(picture)
     if picture == "apple.png":
@@ -109,6 +108,7 @@ def drawpic(picture,cords):
         screen.blit(pic,(getcord(cords)[0],getcord(cords)[1]))
 
 def drawsnake():
+
     for a in range(len(snake)):
 
         drawpic("snake.middle.png",snake[a])
@@ -132,6 +132,7 @@ def drawsnake():
             case[1,0]:
                 drawpic("snake.left.png",snake[a])
                 drawpic("snake.right.png",snake[a+1])
+
 drawgrid()
 
 snakey = int(grid_size/2)
@@ -147,7 +148,7 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    time.sleep(0)    
+    time.sleep(0.0)    
     if event.type == pygame.KEYDOWN:
         key = event.key
         if key == pygame.K_LEFT:
@@ -194,9 +195,12 @@ while running:
 
     screen.fill((0, 0, 0))
     drawpic("apple.png",str(random.randint(1,grid_size))+","+str(random.randint(1,grid_size)))
-    drawgrid()
+#    drawgrid()
     drawsnake()
     pygame.display.update()
+    t1 = threading.Thread(target=drawgrid, args=())
+    t1.start()
+    t1.join()
 
 
 
