@@ -3,15 +3,13 @@ import random
 import sys
 import time
 import threading
-# Initialize Pygame
 pygame.init()
 screen_width = 1000
 screen_hight = 1000
-# Set up the game window
 screen = pygame.display.set_mode((screen_width, screen_hight))
 pygame.display.set_caption("3iem_conte's snake")
 clock = pygame.time.Clock()
-border = 100
+
 FPS = 60
 
 if 1==1:
@@ -20,7 +18,7 @@ if 1==1:
     screen_width = screen.get_width()
     screen_hight = screen.get_height()
 
-
+border = 50
 appleamount = 1
 snakelengh = 3
 grid_size = 20
@@ -28,8 +26,6 @@ gamemode = "survival"
 difficulty = "hard"
 
 alive = True
-
-
 coordinates = []
 co_y = 1
 gridcolor = (0,255,255)
@@ -39,21 +35,16 @@ y = 0
 ia = 0
 cordoutput = []
 i = 1
-
 color1 = (50,200,50)
 color2 = (50,180,50)
 color0 = (70,200,70)
 black = (0,0,0)
 screen.fill(color0)
-
 co = []
 coordinates = []
 i = 1
 co_y = 1
 segcords = ""
-
-
-
 def getcord(item):
     cordoutput=[]
     gc = item.split(",")
@@ -108,12 +99,9 @@ def drawsnake(methode):
             drawpic("snake.middle.medium.png",snake[a])
             segment=[]
             if a < len(snake)-1:
-
                 seg1 = getcord(snake[a])
                 seg2 = getcord(snake[a+1])
-
                 segment = [int((seg1[0]-seg2[0])/int(sizex)),int((seg1[1]-seg2[1])/int(sizey))]
-                
             match segment:
                 case[0,-1]:
                     drawpic("snake.down.png",snake[a])
@@ -154,12 +142,6 @@ def delseg():
     drawsquare(spsnake[0]/sizex,spsnake[1]/sizey)
     snake.pop(0)
     drawsnake(0)
-      
-    """currentseg = 0
-    print(segcords)
-    for segcords in snake:  
-        currentseg = snake.index(segcords,currentseg)
-        drawsnake(currentseg-1)"""
 
 def drawborder():
     rectangle = pygame.Rect(border-sizex,border-sizey,(grid_size+2)*sizex,sizey)
@@ -174,7 +156,9 @@ def drawborder():
     rectangle = pygame.Rect(border-sizex,(border-sizey)+((grid_size+1)*sizey),(grid_size+2)*sizex,sizey)
     pygame.draw.rect(screen,(color0), rectangle)
 
-
+def drawapple():
+    for a in range(len(appleco)):
+        drawpic("apple.png",appleco[a])
 
 match difficulty:
     case "easy":
@@ -197,30 +181,33 @@ match difficulty:
     case "custom":
         speed = 0.05
         loop = True
+
 sizey = ((screen_hight-border*2)/grid_size)
 sizex = ((screen_hight-border*2)/grid_size)
-
 direction=""
 appleco = []
-
-
-
 drawgrid()
 snakey = int(grid_size/2)
 snakex = int(grid_size/2)
 snake = [str(int(grid_size/2))+","+str(int(grid_size/2))]
-#game loop
 for a in range(appleamount):
-    appleco.append(str(random.randint(1,grid_size-1))+","+str(random.randint(1,grid_size-1)))
-    drawpic("apple.png",appleco[a])
+    applex = random.randint(1,grid_size)
+    appley = random.randint(1,grid_size)
+    while str(applex)+","+str(appley) in snake or str(applex)+","+str(appley) in appleco:
+        applex = random.randint(1,grid_size)
+        appley = random.randint(1,grid_size)
+    appleco.append(str(applex)+","+str(appley))
+    drawpic("apple.png",str(applex)+","+str(appley)
+            )
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False 
-        if snakex > 0 and snakey > 0 and snakex < grid_size+1 and snakey < grid_size+1:
-            if event.type == pygame.KEYDOWN:
-                key = event.key
+
+        if event.type == pygame.KEYDOWN:
+            key = event.key
+            if snakex > 0 and snakey > 0 and snakex < grid_size+1 and snakey < grid_size+1:
                 if inputthisframe == False:
                     if key == pygame.K_LEFT:
                         if not direction == "right":                
@@ -238,9 +225,20 @@ while running:
                         if not direction == "up":
                             direction = "down"
                             inputthisframe = True
-                    #if key == pygame.K_a:
-                    #    snakey = int(grid_size/2)
-                    #    snakex = int(grid_size/2)
+            if key == pygame.K_a:
+                drawgrid()
+                appleco = []
+                for a in range(appleamount):
+                    appleco.append(str(random.randint(1,grid_size-1))+","+str(random.randint(1,grid_size-1)))
+                    drawpic("apple.png",appleco[a])
+                snakey = int(grid_size/2)
+                snakex = int(grid_size/2)
+                snake = [str(int(grid_size/2))+","+str(int(grid_size/2))]
+                direction=""
+                snakelengh = 3
+                alive = True
+                print("uh")
+                pygame.display.update()
     inputthisframe = False
     time.sleep(speed)
     if alive == True:
@@ -269,6 +267,7 @@ while running:
             case False:        
                 if snakex > grid_size or snakey > grid_size or snakex < 1 or snakey < 1:
                     alive = False
+                    inputthisframe = False
             case True:
                 if snakex > grid_size:
                     snakex = 0
@@ -284,7 +283,6 @@ while running:
                     if direction == "up":
                         snakey = grid_size+1
                         drawpic("snake.down.png",str(snakex)+","+str(snakey-1)) 
-
         if str(snakex)+","+str(snakey) in appleco :
             drawsquare(snakex-1,snakey-1)
             drawsnake(len(snake)-2)
@@ -293,32 +291,24 @@ while running:
             applex = random.randint(1,grid_size-1)
             appley = random.randint(1,grid_size-1)
             while str(applex)+","+str(appley) in snake or str(applex)+","+str(appley) in appleco:
-                applex = random.randint(1,grid_size-1)
-                appley = random.randint(1,grid_size-1)
+                applex = random.randint(1,grid_size)
+                appley = random.randint(1,grid_size)
             appleco.append(str(applex)+","+str(appley))
             drawpic("apple.png",str(applex)+","+str(appley))
-
         if len(snake) > snakelengh :
             delseg()
         sizey = ((screen_hight-border*2)/grid_size)
         sizex = ((screen_hight-border*2)/grid_size)
-        """grid_size+=1
-        t1 = threading.Thread(target=drawgrid, args=())
-        t1.start()
-        t1.join()"""
-
-
-
-
+        if 1 == 0:
+            grid_size += 1
+            t1 = threading.Thread(target=drawgrid, args=())
+            t1.start()
+            t1.join()
+            drawsnake("whole")
+            drawapple()
         t2 = threading.Thread(target=drawsnake, args=((len(snake)-2),))
         t2.start()
         t2.join()
         drawborder()
-
-
     pygame.display.update()
-
-
-
-# Quit Pygame
 pygame.quit()
