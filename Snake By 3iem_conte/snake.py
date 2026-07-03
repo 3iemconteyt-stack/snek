@@ -26,8 +26,15 @@ grid_size = 20
 gamemode = "survival"
 difficulty = "easy"
 
-difficultylist =["easy","medium","hard","insane"]
+#difficultylist =["easy","medium","hard","insane"]
+difficultylist =["easy"]
 difficultylistindex = 0
+unlocklist = ["medium","hard","insane","custom"]
+unlockprice = [100,250,500,1500]
+unlocklistindex = 0
+
+#reminder to also change value in the erase save function!
+difficultyorder = ["easy","medium","hard","insane","custom","what"]
 alive = True
 coordinates = []
 co_y = 1
@@ -49,11 +56,12 @@ i = 1
 co_y = 1
 segcords = ""
 money = 0
-my_font = pygame.font.SysFont('Bauhaus 93', 45)
+my_font = pygame.font.Font("Minecraftia.ttf", 30)
 picsize = 50
 settingsx = (screen_width-70)-70
 settingsy = picsize
 settingsize = 70
+
 def getcord(item):
     cordoutput=[]
     gc = item.split(",")
@@ -185,10 +193,10 @@ def drawtext(text,x,y,color):
     text_surface = my_font.render(text, False, color)
     screen.blit(text_surface, (x,y))
 
-def drawpicture(picture,xa,ya,size):
+def drawpicture(picture,xa,ya,sizex,sizey):
     str(picture)
     picture = pygame.image.load(picture)
-    pic = pygame.transform.scale(picture,(size,size))
+    pic = pygame.transform.scale(picture,(sizex,sizey))
     screen.blit(pic,(xa,ya))
 
 def checkmousecolision(corner1x, corner1y, corner2x, corner2y):
@@ -222,7 +230,6 @@ def restart():
                     if difficultylistindex > len(difficultylist)-1:
                         difficultylistindex =0
                     difficulty = difficultylist[difficultylistindex]
-
                     match difficulty:
                         case "easy":
                             speed = 0.1
@@ -266,34 +273,63 @@ def restart():
 def save():
     with open("snakesave.txt","w") as save:
         save.write(str(money)+"\n")
-        save.write(str(difficultylistindex)+"\n")
+        save.write(str(0)+"\n")
         save.write(str(difficultylist)+"\n")
-        save.write(str("1")+"\n")
-        save.write(str("1")+"\n")
+        save.write(str(unlocklistindex)+"\n")
+        save.write(str(unlocklist)+"\n")
+        save.write(str(unlockprice)+"\n")
 
 def load():
     global money
     global difficultylistindex
     global difficultylist
+    global unlocklist
+    global unlocklistindex
+    global unlockprice
     with open("snakesave.txt","r") as save:
         lines = save.readlines()
         money = int((lines[0]).replace("\n",""))
         difficultylistindex = int((lines[1]).replace("\n",""))
-        difficultylist = (lines[2]).replace("\n","").replace("[","").replace("]","").replace("'","") .split(",")
-        print(difficultylist)   
-#save()
+        difficultylist = (lines[2]).replace("\n","").replace("[","").replace("]","").replace("'","").replace(" ","") .split(",")
+        unlocklistindex = int((lines[3]).replace("\n",""))
+        unlocklist = (lines[4]).replace("\n","").replace("[","").replace("]","").replace("'","").replace(" ","").replace('"',"") .split(",")  
+        unlockprice = (lines[5]).replace("\n","").replace("[","").replace("]","").replace("'","").replace(" ","").replace('"',"") .split(",")       
+
+def erasesave():
+    with open("snakesave.txt","w") as save:
+        save.write(str(0)+"\n")
+        save.write(str(0)+"\n")
+        save.write(str(["easy"])+"\n")
+        save.write(str(0)+"\n")
+        save.write(str(["medium","hard","insane","custom"])+"\n")
+        save.write(str([100,250,500,1500])+"\n")
+    load()
+def sortdif():
+    global difficultylist
+    global difficultyorder
+    diflist = difficultylist.copy()
+    difficultylist.clear() 
+    for i in range(len(diflist)):
+        difficultylist.insert(difficultyorder.index(diflist[i-1]),diflist[i-1])
+
 load()
 restart()
+
+sortdif()
+
+
 difficultybuttonposx = int((grid_size+2)*sizex+100)
 difficultybuttonposy = 150
 
+unlockposx =int((grid_size+2)*sizex+100)
+unlockposy = 300
 running = True
 inputthisframe = False
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            save()
             running = False 
-
         if event.type == pygame.KEYDOWN:
             key = event.key
             if snakex > 0 and snakey > 0 and snakex < grid_size+1 and snakey < grid_size+1:
@@ -320,13 +356,35 @@ while running:
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
                 mousex, mousey = pygame.mouse.get_pos()
+                if difficultylistindex < 0:
+                    difficultylistindex = len(difficultylist)-1
+                if difficultylistindex > len(difficultylist)-1:
+                    difficultylistindex =0
+                difficulty = difficultylist[difficultylistindex]
                 if checkmousecolision(difficultybuttonposx,difficultybuttonposy,difficultybuttonposx+picsize,difficultybuttonposy+picsize):
                     difficultylistindex -= 1
                     restart()
                 if checkmousecolision(difficultybuttonposx+300,difficultybuttonposy,difficultybuttonposx+300+picsize,difficultybuttonposy+picsize):
                     difficultylistindex += 1
                     restart()
+                if checkmousecolision(unlockposx,unlockposy,unlockposx+picsize,unlockposy+picsize):
+                    unlocklistindex -=1
+                if checkmousecolision(unlockposx+300,unlockposy,unlockposx+picsize+300,unlockposy+picsize):
+                    unlocklistindex +=1
 
+                if checkmousecolision(unlockposx,unlockposy+60,unlockposx+picsize*2,unlockposy+picsize+60):
+                    drawpicture("buy.button.png",unlockposx,unlockposy+60,picsize*2,picsize)
+                    unlockprice[unlocklistindex] = int(unlockprice[unlocklistindex])
+                    if money >= unlockprice[unlocklistindex]:
+                        difficultylist.append(unlocklist[unlocklistindex])
+                        money -= unlockprice[unlocklistindex]
+                        unlocklist.pop(unlocklistindex)
+                        unlockprice.pop(unlocklistindex)
+                    sortdif()
+                if unlocklistindex < 0:
+                    unlocklistindex = len(unlocklist)-1
+                if unlocklistindex > len(unlocklist)-1:
+                    unlocklistindex =0
     inputthisframe = False
     time.sleep(speed)
     if alive == True:
@@ -334,27 +392,32 @@ while running:
             case "up":
                 if str(snakex)+","+str(snakey-1) in snake[1:] and colision:
                     alive = False
+                    save()
                 snakey -=1
                 snake.append(str(snakex)+","+str(snakey))
             case "down":
                 if str(snakex)+","+str(snakey+1) in snake[1:] and colision:
                     alive = False
+                    save()
                 snakey +=1
                 snake.append(str(snakex)+","+str(snakey))
             case "right":
                 if str(snakex+1)+","+str(snakey) in snake[1:] and colision:
                     alive = False
+                    save()
                 snakex +=1 
                 snake.append(str(snakex)+","+str(snakey))
             case "left":
                 if str(snakex-1)+","+str(snakey) in snake[1:] and colision:
                     alive = False
+                    save()
                 snakex -=1
                 snake.append(str(snakex)+","+str(snakey))
         match loop:
             case False:        
                 if snakex > grid_size or snakey > grid_size or snakex < 1 or snakey < 1:
                     alive = False
+                    save()
                     inputthisframe = False
             case True:
                 if snakex > grid_size:
@@ -400,17 +463,31 @@ while running:
         t2 = threading.Thread(target=drawsnake, args=((len(snake)-2),))
         t2.start()
         t2.join()
-        drawborder()
+    drawborder()
 
     drawtext("score "+str(snakelengh),((grid_size+2)*sizex)/2,0,(0,0,0))   
     drawtext(": "+str(money),((grid_size+2)*sizex)+50+picsize,50,(0,0,0))
-    drawpicture("apple.png",int((grid_size+2)*sizex+50),50,picsize)
+    drawpicture("apple.png",int((grid_size+2)*sizex+50),50,picsize,picsize)
+
     text_width, text_height = my_font.size(str(difficulty))
-
-    drawpicture("arrow.left.png",difficultybuttonposx,difficultybuttonposy,picsize)
+    drawpicture("arrow.left.png",difficultybuttonposx,difficultybuttonposy,picsize,picsize)
+    drawpicture("arrow.right.png",difficultybuttonposx+300,difficultybuttonposy,picsize,picsize)
     drawtext(str(difficulty),(difficultybuttonposx+picsize)+((250/2-(text_width/2))),difficultybuttonposy,(0,0,0))
-    drawpicture("arrow.right.png",difficultybuttonposx+300,difficultybuttonposy,picsize)
+    text_width, text_height = my_font.size(str("difficulty"))
+    drawtext(str("difficulty"),(difficultybuttonposx+picsize)+((250/2-(text_width/2))),difficultybuttonposy-50,(0,0,0))
 
-    drawpicture("setting.png",settingsx,settingsy,settingsize)    
+    drawpicture("arrow.left.png",unlockposx,unlockposy,picsize,picsize)
+    drawpicture("arrow.right.png",unlockposx+300,unlockposy,picsize,picsize)
+
+    #drawpicture("buy.button.png",(unlockposx+picsize)+((250/2-(picsize))),unlockposy+50,picsize*2,picsize)
+    text_width, text_height = my_font.size(str(unlockprice[unlocklistindex]))
+    drawtext(str(unlockprice[unlocklistindex]),(unlockposx+picsize*2)+((((300-(picsize*2))/2))-((text_width+picsize)/2)),unlockposy+60,(0,0,0))
+    drawpicture("apple.png",(unlockposx+picsize*2)+((((300-(picsize*2))/2))-((text_width+picsize)/2))+text_width,unlockposy+60,picsize,picsize)
+
+    drawpicture("buy.button.png",unlockposx,unlockposy+60,picsize*2,picsize)
+    text_width, text_height = my_font.size(str(unlocklist[unlocklistindex]))
+    drawtext(str(unlocklist[unlocklistindex]),(unlockposx+picsize)+((250/2-(text_width/2))),unlockposy,(50,50,50))
+
+    #drawpicture("setting.png",settingsx,settingsy,settingsize)    
     pygame.display.update()
 pygame.quit()

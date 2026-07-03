@@ -1,5 +1,6 @@
-12
 0
-['easy', 'medium', 'hard', 'insane']
-1
-1
+0
+['easy']
+0
+['medium', 'hard', 'insane', 'custom']
+['100', '250', '500', '1500']
